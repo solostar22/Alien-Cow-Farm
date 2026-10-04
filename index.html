@@ -38,14 +38,12 @@
 
     <script>
         // --- CONFIGURATION ---
-        const SUPABASE_URL = 'https://umkyohkbcvuzkekxtayl.supabase.co'; // <--- REPLACE ME
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVta3lvaGtiY3Z1emtla3h0YXlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTExMjk2OTIsImV4cCI6MjEwNjcwNTY5Mn0.A5ZjY8cBt5RxCLy3NvnFu8Xzp9-iZWNdT3FhNa4H7oE'; // <--- REPLACE ME
-        const MY_WALLET_ADDRESS = 'UQCwc-rD5p0_wDaXziXjX35IISbIqp-f3amZMEUFiu_KYo2T'; // <--- REPLACE ME
+        const SUPABASE_URL = 'https://umkyohkbcvuzkekxtayl.supabase.co'; 
+        const SUPABASE_KEY = 'sb_publishable_tmI4W5ftZt_qbubsM38oFg_mzAl9Cr2'; // <--- MAKE SURE THIS IS YOUR REAL KEY
+        const MY_WALLET_ADDRESS = 'UQCwc-rD5p0_wDaXziXjX35IISbIqp-f3amZMEUFiu_KYo2T'; // <--- MAKE SURE THIS IS YOUR REAL ADDRESS
         const UPGRADE_PRICE = 1.0;
 
-        // FIXED LINE BELOW:
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
         const tg = window.Telegram.WebApp;
         tg.expand();
 
@@ -62,24 +60,36 @@
         const cowEl = document.getElementById('cow');
 
         async function loadPlayerData() {
-            const { data } = await supabaseClient.from('players').select('balance').eq('telegram_id', userId).single();
-            if (data) {
-                score = data.balance;
-            } else {
-                await supabaseClient.from('players').insert([{ telegram_id: userId, balance: 0 }]);
+            try {
+                const { data } = await supabaseClient.from('players').select('balance').eq('telegram_id', userId).single();
+                if (data) {
+                    score = data.balance;
+                } else {
+                    await supabaseClient.from('players').insert([{ telegram_id: userId, balance: 0 }]);
+                }
+            } catch (e) {
+                console.log("DB Load error, using local score");
             }
             scoreEl.innerText = score;
         }
 
         async function saveScore() {
-            await supabaseClient.from('players').update({ balance: score }).eq('telegram_id', userId);
+            try {
+                await supabaseClient.from('players').update({ balance: score }).eq('telegram_id', userId);
+            } catch (e) {
+                console.log("DB Save error");
+            }
         }
 
         cowEl.onclick = async () => {
+            // UPDATE SCREEN FIRST (No waiting for database)
             score += power;
             scoreEl.innerText = score;
+            
             if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-            await saveScore();
+            
+            // SAVE IN BACKGROUND
+            saveScore();
         };
 
         function toggleShop() {
@@ -107,4 +117,4 @@
         loadPlayerData();
     </script>
 </body>
-</html>
+</html
