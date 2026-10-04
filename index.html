@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -43,7 +44,12 @@
         const MY_WALLET_ADDRESS = 'UQCwc-rD5p0_wDaXziXjX35IISbIqp-f3amZMEUFiu_KYo2T'; // <--- MAKE SURE THIS IS YOUR REAL ADDRESS
         const UPGRADE_PRICE = 1.0;
 
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // Initialize Supabase safely
+        let supabaseClient = null;
+        try {
+            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        } catch(e) { console.error("Supabase Init Error"); }
+
         const tg = window.Telegram.WebApp;
         tg.expand();
 
@@ -60,36 +66,31 @@
         const cowEl = document.getElementById('cow');
 
         async function loadPlayerData() {
+            if (!supabaseClient) return;
             try {
                 const { data } = await supabaseClient.from('players').select('balance').eq('telegram_id', userId).single();
-                if (data) {
-                    score = data.balance;
-                } else {
-                    await supabaseClient.from('players').insert([{ telegram_id: userId, balance: 0 }]);
-                }
-            } catch (e) {
-                console.log("DB Load error, using local score");
-            }
+                if (data) { score = data.balance; } 
+                else { await supabaseClient.from('players').insert([{ telegram_id: userId, balance: 0 }]); }
+            } catch (e) { console.log("Load error"); }
             scoreEl.innerText = score;
         }
 
         async function saveScore() {
+            if (!supabaseClient) return;
             try {
                 await supabaseClient.from('players').update({ balance: score }).eq('telegram_id', userId);
-            } catch (e) {
-                console.log("DB Save error");
-            }
+            } catch (e) { console.log("Save error"); }
         }
 
-        cowEl.onclick = async () => {
-            // UPDATE SCREEN FIRST (No waiting for database)
+        // THE FIX: Update screen FIRST, save in background
+        cowEl.onclick = () => {
             score += power;
             scoreEl.innerText = score;
             
             if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
             
-            // SAVE IN BACKGROUND
-            saveScore();
+            // Run save in background without 'await' so the UI never freezes
+            saveScore(); 
         };
 
         function toggleShop() {
@@ -101,7 +102,7 @@
             const transaction = {
                 validUntil: Math.floor(Date.now() / 1000) + 60,
                 messages: [{
-                    address: MY_WALLET_ADDRESS,
+                    address: UQCwc-rD5p0_wDaXziXjX35IISbIqp-f3amZMEUFiu_KYo2T,
                     amount: (UPGRADE_PRICE * 1000000000).toString(),
                 }],
             };
@@ -117,4 +118,4 @@
         loadPlayerData();
     </script>
 </body>
-</html
+</html>
