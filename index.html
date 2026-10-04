@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Alien Cow Galactic Farm</title>
+    <!-- This script is required to make it work inside Telegram -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { 
+            background: radial-gradient(circle, #2a0845 0%, #000000 100%); 
+            color: #00ffcc; 
+            text-align: center; 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            overflow: hidden; 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            user-select: none;
+        }
+        h1 { 
+            font-size: 1.8rem; 
+            text-shadow: 0 0 15px #00ffcc; 
+            margin-bottom: 10px;
+        }
+        .stat-box { 
+            font-size: 2.5rem; 
+            font-weight: bold; 
+            margin: 20px; 
+            text-shadow: 0 0 10px #00ffcc;
+        }
+        #cow { 
+            width: 280px; 
+            cursor: pointer; 
+            transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            filter: drop-shadow(0 0 20px #00ffcc);
+        }
+        #cow:active { transform: scale(0.8); }
+        .footer { 
+            position: absolute; 
+            bottom: 30px; 
+            font-size: 1rem; 
+            opacity: 0.7; 
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🛸 ALIEN COW GALACTIC FARM 🐮</h1>
+    <div class="stat-box">Moon-Milk: <span id="score">0</span> 🥛</div>
+    
+    <!-- The Alien Cow Image -->
+    <img id="cow" src="https://cdn-icons-png.flaticon.com/512/235/235359.png" alt="Alien Cow">
+    
+    <div class="footer">TAP THE COW TO HARVEST MILK!</div>
+
+    <script>
+        // 1. Initialize Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.expand(); // Makes the app full screen in Telegram
+        tg.headerColor = '#2a0845';
+        tg.backgroundColor = '#000000';
+
+        let score = 0;
+        const scoreEl = document.getElementById('score');
+        const cowEl = document.getElementById('cow');
+
+        // 2. Game Logic
+        cowEl.onclick = () => {
+            score++;
+            scoreEl.innerText = score;
+
+            // 3. Haptic Feedback (Makes the phone vibrate on tap)
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('medium');
+            }
+        };
+    </script>
+</body>
+</html>
