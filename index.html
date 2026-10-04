@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,46 +17,85 @@
         #shop-menu { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); border: 2px solid #00ffcc; padding: 20px; border-radius: 20px; width: 80%; z-index: 100; }
         .shop-item { background: #1a0b2e; padding: 15px; border-radius: 10px; margin: 10px 0; display: flex; justify-content: space-between; align-items: center; }
         .buy-btn { background: #ffcc00; color: #000; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        #ton-connect-button { margin-bottom: 20px; }
+        
+        /* LOGIN SCREEN STYLES */
+        #login-screen { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: #000; z-index: 1000; display: flex; 
+            flex-direction: column; justify-content: center; align-items: center; 
+        }
+        #game-content { display: none; } /* Hide game by default */
+        .login-text { margin-bottom: 20px; font-size: 1.2rem; }
     </style>
 </head>
 <body>
-    <div id="ton-connect-button"></div>
-    <h1>🛸 ALIEN COW FARM 🐮</h1>
-    <div class="stat-box">Moon-Milk: <span id="score">0</span> 🥛</div>
-    <div style="font-size: 0.9rem; margin-bottom: 10px;">Power: <span id="power">1</span> per click</div>
-    <img id="cow" src="https://cdn-icons-png.flaticon.com/512/235/235359.png" alt="Alien Cow">
-    <button class="shop-btn" onclick="toggleShop()">🚀 UPGRADE SHOP</button>
-    <div id="shop-menu">
-        <h2>Galactic Shop</h2>
-        <div class="shop-item">
-            <span>Super Feed (+1 Power) <br> <small>Price: 1 TON</small></span>
-            <button class="buy-btn" onclick="buyUpgrade()">BUY</button>
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen">
+        <h1 style="margin-bottom: 20px;">🛸 GALACTIC ACCESS 🛸</h1>
+        <p class="login-text">Please connect your TON Wallet to enter the farm!</p>
+        <div id="ton-connect-button"></div>
+    </div>
+
+    <!-- ACTUAL GAME CONTENT -->
+    <div id="game-content">
+        <div id="game-wallet-button" style="margin-bottom: 20px;"></div>
+        <h1>🛸 ALIEN COW FARM 🐮</h1>
+        <div class="stat-box">Moon-Milk: <span id="score">0</span> 🥛</div>
+        <div style="font-size: 0.9rem; margin-bottom: 10px;">Power: <span id="power">1</span> per click</div>
+        <img id="cow" src="https://cdn-icons-png.flaticon.com/512/235/235359.png" alt="Alien Cow">
+        <button class="shop-btn" onclick="toggleShop()">🚀 UPGRADE SHOP</button>
+        <div id="shop-menu">
+            <h2>Galactic Shop</h2>
+            <div class="shop-item">
+                <span>Super Feed (+1 Power) <br> <small>Price: 1 TON</small></span>
+                <button class="buy-btn" onclick="buyUpgrade()">BUY</button>
+            </div>
+            <button class="shop-btn" onclick="toggleShop()">CLOSE</button>
         </div>
-        <button class="shop-btn" onclick="toggleShop()">CLOSE</button>
     </div>
 
     <script>
         // --- CONFIGURATION ---
-        const SUPABASE_URL = 'https://umkyohkbcvuzkekxtayl.supabase.co'; 
-        const SUPABASE_KEY = 'sb_publishable_tmI4W5ftZt_qbubsM38oFg_mzAl9Cr2'; // <--- MAKE SURE THIS IS YOUR REAL KEY
-        const MY_WALLET_ADDRESS = 'UQCwc-rD5p0_wDaXziXjX35IISbIqp-f3amZMEUFiu_KYo2T'; // <--- MAKE SURE THIS IS YOUR REAL ADDRESS
+        const SUPABASE_URL = 'https://umkyohkbcvuzkekxtayl.supabase.co/rest/v1/'; 
+        const SUPABASE_KEY = 'sb_publishable_tmI4W5ftZt_qbubsM38oFg_mzAl9Cr2'; 
+        const MY_WALLET_ADDRESS = 'UQCwc-rD5p0_wDaXziXjX35IISbIqp-f3amZMEUFiu_KYo2T'; 
         const UPGRADE_PRICE = 1.0;
 
-        // Initialize Supabase safely
-        let supabaseClient = null;
-        try {
-            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        } catch(e) { console.error("Supabase Init Error"); }
-
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         const tg = window.Telegram.WebApp;
         tg.expand();
 
         const tonConnectUI = new TON_CONNECT_UI.TonConnectUI.TonConnectUI();
+
+        // 1. HANDLE WALLET LOGIN
+        async function checkWallet() {
+            if (tonConnectUI.connected) {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('game-content').style.display = 'flex';
+                document.getElementById('game-content').style.flexDirection = 'column';
+                document.getElementById('game-content').style.alignItems = 'center';
+                document.getElementById('game-content').style.justifyContent = 'center';
+                document.getElementById('game-content').style.height = '100vh';
+            }
+        }
+
+        // Create Login Button
         tonConnectUI.createTonConnectButton().then(node => {
             document.getElementById('ton-connect-button').appendChild(node);
         });
 
+        // Create Small Wallet Button inside the game
+        tonConnectUI.createTonConnectButton().then(node => {
+            document.getElementById('game-wallet-button').appendChild(node);
+        });
+
+        // Listen for wallet connection changes
+        tonConnectUI.onStatusChange(wallet => {
+            checkWallet();
+        });
+
+        // 2. GAME LOGIC
         const userId = tg.initDataUnsafe?.user?.id || 'guest_user';
         let score = 0;
         let power = 1;
@@ -66,7 +104,6 @@
         const cowEl = document.getElementById('cow');
 
         async function loadPlayerData() {
-            if (!supabaseClient) return;
             try {
                 const { data } = await supabaseClient.from('players').select('balance').eq('telegram_id', userId).single();
                 if (data) { score = data.balance; } 
@@ -76,20 +113,15 @@
         }
 
         async function saveScore() {
-            if (!supabaseClient) return;
             try {
                 await supabaseClient.from('players').update({ balance: score }).eq('telegram_id', userId);
             } catch (e) { console.log("Save error"); }
         }
 
-        // THE FIX: Update screen FIRST, save in background
         cowEl.onclick = () => {
             score += power;
             scoreEl.innerText = score;
-            
             if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-            
-            // Run save in background without 'await' so the UI never freezes
             saveScore(); 
         };
 
@@ -102,7 +134,7 @@
             const transaction = {
                 validUntil: Math.floor(Date.now() / 1000) + 60,
                 messages: [{
-                    address: UQCwc-rD5p0_wDaXziXjX35IISbIqp-f3amZMEUFiu_KYo2T,
+                    address: MY_WALLET_ADDRESS,
                     amount: (UPGRADE_PRICE * 1000000000).toString(),
                 }],
             };
@@ -115,7 +147,9 @@
                 alert("Payment failed.");
             }
         }
+
         loadPlayerData();
+        checkWallet(); // Check on load
     </script>
 </body>
 </html>
