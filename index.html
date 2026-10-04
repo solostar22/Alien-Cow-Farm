@@ -6,7 +6,6 @@
     <title>Alien Cow Galactic Farm</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- TON Connect SDK -->
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <style>
         body { background: radial-gradient(circle, #2a0845 0%, #000000 100%); color: #00ffcc; text-align: center; font-family: sans-serif; margin: 0; overflow: hidden; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; user-select: none; }
@@ -22,17 +21,12 @@
     </style>
 </head>
 <body>
-    <!-- TON Connect Button will be inserted here -->
     <div id="ton-connect-button"></div>
-
     <h1>🛸 ALIEN COW FARM 🐮</h1>
     <div class="stat-box">Moon-Milk: <span id="score">0</span> 🥛</div>
     <div style="font-size: 0.9rem; margin-bottom: 10px;">Power: <span id="power">1</span> per click</div>
-    
     <img id="cow" src="https://cdn-icons-png.flaticon.com/512/235/235359.png" alt="Alien Cow">
-    
     <button class="shop-btn" onclick="toggleShop()">🚀 UPGRADE SHOP</button>
-
     <div id="shop-menu">
         <h2>Galactic Shop</h2>
         <div class="shop-item">
@@ -44,16 +38,17 @@
 
     <script>
         // --- CONFIGURATION ---
-        const SUPABASE_URL = 'https://umkyohkbcvuzkekxtayl.supabase.co/rest/v1/';
-        const SUPABASE_KEY = 'sb_secret_-C4XjDBdzPIBGIwU2Ojy7g_Dl1Csum8';
-        const MY_WALLET_ADDRESS = 'UQCwc-rD5p0_wDaXziXjX35IISbIqp-f3amZMEUFiu_KYo2T'; // <--- PUT YOUR EQ... ADDRESS HERE
-        const UPGRADE_PRICE = 1.0; // Price in TON
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL'; // <--- REPLACE ME
+        const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY'; // <--- REPLACE ME
+        const MY_WALLET_ADDRESS = 'YOUR_WALLET_ADDRESS_HERE'; // <--- REPLACE ME
+        const UPGRADE_PRICE = 1.0;
 
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // FIXED LINE BELOW:
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // TON Connect Setup
         const tonConnectUI = new TON_CONNECT_UI.TonConnectUI.TonConnectUI();
         tonConnectUI.createTonConnectButton().then(node => {
             document.getElementById('ton-connect-button').appendChild(node);
@@ -67,17 +62,17 @@
         const cowEl = document.getElementById('cow');
 
         async function loadPlayerData() {
-            const { data } = await supabase.from('players').select('balance').eq('telegram_id', userId).single();
+            const { data } = await supabaseClient.from('players').select('balance').eq('telegram_id', userId).single();
             if (data) {
                 score = data.balance;
             } else {
-                await supabase.from('players').insert([{ telegram_id: userId, balance: 0 }]);
+                await supabaseClient.from('players').insert([{ telegram_id: userId, balance: 0 }]);
             }
             scoreEl.innerText = score;
         }
 
         async function saveScore() {
-            await supabase.from('players').update({ balance: score }).eq('telegram_id', userId);
+            await supabaseClient.from('players').update({ balance: score }).eq('telegram_id', userId);
         }
 
         cowEl.onclick = async () => {
@@ -93,26 +88,22 @@
         }
 
         async function buyUpgrade() {
-            const wallet = tonConnectUI.connect();
-            
             const transaction = {
-                validUntil: Math.floor(Date.now() / 1000) + 60, // 60 seconds
+                validUntil: Math.floor(Date.now() / 1000) + 60,
                 messages: [{
-                    address: UQCwc-rD5p0_wDaXziXjX35IISbIqp-f3amZMEUFiu_KYo2T,
-                    amount: (UPGRADE_PRICE * 1000000000).toString(), // Convert TON to nanoTON
+                    address: MY_WALLET_ADDRESS,
+                    amount: (UPGRADE_PRICE * 1000000000).toString(),
                 }],
             };
-
             try {
                 await tonConnectUI.sendTransaction(transaction);
                 power++;
                 powerEl.innerText = power;
-                alert("Upgrade Successful! Your cow is now stronger! 🐮✨");
+                alert("Upgrade Successful! 🐮✨");
             } catch (e) {
-                alert("Payment failed or cancelled.");
+                alert("Payment failed.");
             }
         }
-
         loadPlayerData();
     </script>
 </body>
