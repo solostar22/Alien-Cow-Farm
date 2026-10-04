@@ -3,153 +3,196 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Alien Cow Galactic Farm</title>
+    <title>NEON COW SLOTS 🎰</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <style>
-        body { background: radial-gradient(circle, #2a0845 0%, #000000 100%); color: #00ffcc; text-align: center; font-family: sans-serif; margin: 0; overflow: hidden; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; user-select: none; }
-        h1 { font-size: 1.5rem; text-shadow: 0 0 15px #00ffcc; }
-        .stat-box { font-size: 2rem; font-weight: bold; margin: 10px; }
-        #cow { width: 220px; cursor: pointer; transition: transform 0.1s; filter: drop-shadow(0 0 15px #00ffcc); }
-        #cow:active { transform: scale(0.8); }
-        .shop-btn { background: #00ffcc; color: #000; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; margin-top: 20px; border: none; }
-        #shop-menu { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); border: 2px solid #00ffcc; padding: 20px; border-radius: 20px; width: 80%; z-index: 100; }
-        .shop-item { background: #1a0b2e; padding: 15px; border-radius: 10px; margin: 10px 0; display: flex; justify-content: space-between; align-items: center; }
-        .buy-btn { background: #ffcc00; color: #000; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        body { background: #050505; color: #00ffcc; font-family: 'Press Start 2P', cursive; margin: 0; overflow: hidden; height: 100vh; display: flex; flex-direction: column; align-items: center; user-select: none; }
         
-        /* LOGIN SCREEN STYLES */
-        #login-screen { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: #000; z-index: 1000; display: flex; 
-            flex-direction: column; justify-content: center; align-items: center; 
-        }
-        #game-content { display: none; } /* Hide game by default */
-        .login-text { margin-bottom: 20px; font-size: 1.2rem; }
+        /* NEON THEME */
+        .neon-text { text-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc; }
+        .neon-border { border: 4px solid #00ffcc; box-shadow: 0 0 15px #00ffcc, inset 0 0 10px #00ffcc; }
+
+        /* LOGIN SCREEN */
+        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        #game-content { display: none; width: 100%; height: 100vh; flex-direction: column; align-items: center; padding-top: 20px; }
+
+        /* SLOTS MACHINE */
+        .slot-machine { background: #111; padding: 20px; border-radius: 15px; margin: 20px; position: relative; }
+        .reels { display: flex; gap: 10px; margin-bottom: 20px; }
+        .reel { width: 80px; height: 80px; background: #222; border: 3px solid #ff00ff; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 2rem; box-shadow: 0 0 10px #ff00ff; }
+        
+        .stat-box { font-size: 1rem; margin: 10px; color: #ffff00; }
+        .spin-btn { background: #ff00ff; color: #fff; padding: 15px 30px; border: none; font-family: 'Press Start 2P'; cursor: pointer; box-shadow: 0 0 15px #ff00ff; }
+        .spin-btn:disabled { background: #555; box-shadow: none; }
+
+        /* LEADERBOARD & SHOP */
+        .menu-btn { background: none; color: #00ffcc; border: 2px solid #00ffcc; padding: 10px; margin: 5px; font-family: 'Press Start 2P'; cursor: pointer; font-size: 0.6rem; }
+        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 500; flex-direction: column; align-items: center; justify-content: center; }
+        .modal { background: #000; border: 4px solid #00ffcc; padding: 20px; width: 80%; max-height: 70%; overflow-y: auto; }
+        .rank-item { display: flex; justify-content: space-between; margin: 10px 0; font-size: 0.7rem; border-bottom: 1px solid #333; }
     </style>
 </head>
 <body>
 
-    <!-- LOGIN SCREEN -->
     <div id="login-screen">
-        <h1 style="margin-bottom: 20px;">🛸 GALACTIC ACCESS 🛸</h1>
-        <p class="login-text">Please connect your TON Wallet to enter the farm!</p>
+        <h1 class="neon-text">🎰 NEON COW SLOTS</h1>
+        <p style="font-size: 0.6rem; margin: 20px;">Connect Wallet to Gamble</p>
         <div id="ton-connect-button"></div>
     </div>
 
-    <!-- ACTUAL GAME CONTENT -->
     <div id="game-content">
-        <div id="game-wallet-button" style="margin-bottom: 20px;"></div>
-        <h1>🛸 ALIEN COW FARM 🐮</h1>
-        <div class="stat-box">Moon-Milk: <span id="score">0</span> 🥛</div>
-        <div style="font-size: 0.9rem; margin-bottom: 10px;">Power: <span id="power">1</span> per click</div>
-        <img id="cow" src="https://cdn-icons-png.flaticon.com/512/235/235359.png" alt="Alien Cow">
-        <button class="shop-btn" onclick="toggleShop()">🚀 UPGRADE SHOP</button>
-        <div id="shop-menu">
-            <h2>Galactic Shop</h2>
-            <div class="shop-item">
-                <span>Super Feed (+1 Power) <br> <small>Price: 1 TON</small></span>
-                <button class="buy-btn" onclick="buyUpgrade()">BUY</button>
+        <div id="wallet-btn" style="margin-bottom: 10px;"></div>
+        <h1 class="neon-text">NEON COW 🐮</h1>
+        
+        <div class="stat-box">COINS: <span id="balance">0</span> 🪙</div>
+
+        <div class="slot-machine neon-border">
+            <div class="reels">
+                <div id="reel1" class="reel">🐮</div>
+                <div id="reel2" class="reel">🐮</div>
+                <div id="reel3" class="reel">🐮</div>
             </div>
-            <button class="shop-btn" onclick="toggleShop()">CLOSE</button>
+            <button id="spin-button" class="spin-btn" onclick="spin()">SPIN (10 🪙)</button>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+            <button class="menu-btn" onclick="showModal('shop')">SHOP 🛒</button>
+            <button class="menu-btn" onclick="showModal('ranks')">RANKS 🏆</button>
         </div>
     </div>
 
+    <div id="overlay">
+        <div class="modal" id="modal-content"></div>
+        <button class="menu-btn" onclick="closeModal()">CLOSE X</button>
+    </div>
+
     <script>
-        // --- CONFIGURATION ---
-        const SUPABASE_URL = 'https://umkyohkbcvuzkekxtayl.supabase.co/rest/v1/'; 
+        // --- CONFIG ---
+        const SUPABASE_URL = 'https://umkyohkbcvuzkekxtayl.supabase.co'; 
         const SUPABASE_KEY = 'sb_publishable_tmI4W5ftZt_qbubsM38oFg_mzAl9Cr2'; 
-        const MY_WALLET_ADDRESS = 'UQCwc-rD5p0_wDaXziXjX35IISbIqp-f3amZMEUFiu_KYo2T'; 
-        const UPGRADE_PRICE = 1.0;
+        const MY_WALLET_ADDRESS = 'UQCwc-rD5p0_wDaXziXjX35IISbIqp-f3amZMEUFiu_KYo2T';
+        const GRAM_PRICE = 1.0; // 1 GRAM/TON for 100 coins
 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         const tg = window.Telegram.WebApp;
         tg.expand();
 
         const tonConnectUI = new TON_CONNECT_UI.TonConnectUI.TonConnectUI();
+        const symbols = ['🐮', '💎', '🌟', '🚀', '🪐'];
 
-        // 1. HANDLE WALLET LOGIN
+        // --- AUTH & ACCESS ---
         async function checkWallet() {
             if (tonConnectUI.connected) {
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('game-content').style.display = 'flex';
                 document.getElementById('game-content').style.flexDirection = 'column';
                 document.getElementById('game-content').style.alignItems = 'center';
-                document.getElementById('game-content').style.justifyContent = 'center';
-                document.getElementById('game-content').style.height = '100vh';
             }
         }
 
-        // Create Login Button
-        tonConnectUI.createTonConnectButton().then(node => {
-            document.getElementById('ton-connect-button').appendChild(node);
-        });
+        tonConnectUI.createTonConnectButton().then(node => document.getElementById('ton-connect-button').appendChild(node));
+        tonConnectUI.createTonConnectButton().then(node => document.getElementById('wallet-btn').appendChild(node));
+        tonConnectUI.onStatusChange(checkWallet);
 
-        // Create Small Wallet Button inside the game
-        tonConnectUI.createTonConnectButton().then(node => {
-            document.getElementById('game-wallet-button').appendChild(node);
-        });
-
-        // Listen for wallet connection changes
-        tonConnectUI.onStatusChange(wallet => {
-            checkWallet();
-        });
-
-        // 2. GAME LOGIC
+        // --- GAME LOGIC ---
         const userId = tg.initDataUnsafe?.user?.id || 'guest_user';
-        let score = 0;
-        let power = 1;
-        const scoreEl = document.getElementById('score');
-        const powerEl = document.getElementById('power');
-        const cowEl = document.getElementById('cow');
+        let balance = 0;
 
-        async function loadPlayerData() {
-            try {
-                const { data } = await supabaseClient.from('players').select('balance').eq('telegram_id', userId).single();
-                if (data) { score = data.balance; } 
-                else { await supabaseClient.from('players').insert([{ telegram_id: userId, balance: 0 }]); }
-            } catch (e) { console.log("Load error"); }
-            scoreEl.innerText = score;
+        async function loadUser() {
+            const { data } = await supabaseClient.from('players').select('balance').eq('telegram_id', userId).single();
+            balance = data ? data.balance : 100; // Start with 100 coins
+            if (!data) await supabaseClient.from('players').insert([{ telegram_id: userId, balance: 100 }]);
+            updateUI();
         }
 
-        async function saveScore() {
-            try {
-                await supabaseClient.from('players').update({ balance: score }).eq('telegram_id', userId);
-            } catch (e) { console.log("Save error"); }
+        function updateUI() { document.getElementById('balance').innerText = balance; }
+
+        async function spin() {
+            if (balance < 10) return alert("Out of coins! Buy more in Shop.");
+            
+            balance -= 10;
+            updateUI();
+            
+            const btn = document.getElementById('spin-button');
+            btn.disabled = true;
+
+            // Animation
+            let count = 0;
+            const interval = setInterval(() => {
+                document.getElementById('reel1').innerText = symbols[Math.floor(Math.random() * symbols.length)];
+                document.getElementById('reel2').innerText = symbols[Math.floor(Math.random() * symbols.length)];
+                document.getElementById('reel3').innerText = symbols[Math.floor(Math.random() * symbols.length)];
+                count++;
+                if (count > 20) {
+                    clearInterval(interval);
+                    finalizeSpin();
+                }
+            }, 50);
         }
 
-        cowEl.onclick = () => {
-            score += power;
-            scoreEl.innerText = score;
-            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-            saveScore(); 
-        };
+        async function finalizeSpin() {
+            const r1 = document.getElementById('reel1').innerText;
+            const r2 = document.getElementById('reel2').innerText;
+            const r3 = document.getElementById('reel3').innerText;
+            const btn = document.getElementById('spin-button');
 
-        function toggleShop() {
-            const menu = document.getElementById('shop-menu');
-            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+            if (r1 === r2 && r2 === r3) {
+                const win = 500;
+                balance += win;
+                alert(`JACKPOT! You won ${win} coins! 🎊`);
+            } else if (r1 === r2 || r2 === r3 || r1 === r3) {
+                const win = 20;
+                balance += win;
+                alert(`Small Win! +${win} coins!`);
+            }
+
+            updateUI();
+            await supabaseClient.from('players').update({ balance }).eq('telegram_id', userId);
+            btn.disabled = false;
         }
 
-        async function buyUpgrade() {
+        // --- MODALS ---
+        function showModal(type) {
+            const overlay = document.getElementById('overlay');
+            const content = document.getElementById('modal-content');
+            overlay.style.display = 'flex';
+
+            if (type === 'shop') {
+                content.innerHTML = `<h2>COIN SHOP</h2><div class="shop-item"><span>1000 Coins <br> <small>Price: 1 GRAM</small></span><button class="buy-btn" onclick="buyCoins()">BUY</button></div>`;
+            } else if (type === 'ranks') {
+                loadRanks(content);
+            }
+        }
+
+        async function loadRanks(container) {
+            container.innerHTML = `<h2>TOP FARMERS</h2>`;
+            const { data } = await supabaseClient.from('players').select('telegram_id, balance').order('balance', { ascending: false }).limit(10);
+            data.forEach((p, i) => {
+                container.innerHTML += `<div class="rank-item"><span>#${i+1} ${p.telegram_id}</span><span>${p.balance} 🪙</span></div>`;
+            });
+        }
+
+        async function buyCoins() {
             const transaction = {
                 validUntil: Math.floor(Date.now() / 1000) + 60,
-                messages: [{
-                    address: MY_WALLET_ADDRESS,
-                    amount: (UPGRADE_PRICE * 1000000000).toString(),
-                }],
+                messages: [{ address: MY_WALLET_ADDRESS, amount: (GRAM_PRICE * 1000000000).toString() }],
             };
             try {
                 await tonConnectUI.sendTransaction(transaction);
-                power++;
-                powerEl.innerText = power;
-                alert("Upgrade Successful! 🐮✨");
-            } catch (e) {
-                alert("Payment failed.");
-            }
+                balance += 1000;
+                updateUI();
+                await supabaseClient.from('players').update({ balance }).eq('telegram_id', userId);
+                alert("Coins added to your account!");
+            } catch (e) { alert("Payment failed."); }
         }
 
-        loadPlayerData();
-        checkWallet(); // Check on load
+        function closeModal() { document.getElementById('overlay').style.display = 'none'; }
+
+        loadUser();
+        checkWallet();
     </script>
 </body>
 </html>
